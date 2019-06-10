@@ -1,0 +1,4 @@
+scipy
+scikit-learn
+tensorflow==1.6.0
+pandas==0.24.2
