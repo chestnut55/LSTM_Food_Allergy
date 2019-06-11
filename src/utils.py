@@ -6,7 +6,10 @@ import pandas as pd
 
 def metadata(file_path):
     meta = pd.read_csv(file_path, sep=",", index_col=False)
-    meta.dropna(subset=['gid_wgs'], inplace=True)
+    meta = meta.dropna(subset=['gid_wgs'])
+
+    meta = meta.dropna(subset=['allergy_milk','allergy_egg','allergy_peanut'])
+
     allergy_milk = meta.allergy_milk.values.tolist()
     allergy_egg = meta.allergy_egg.values.tolist()
     allergy_peanut = meta.allergy_peanut.values.tolist()
@@ -55,14 +58,25 @@ def lstm_input(meta_file_name, data_file_name):
 
     w_ids = set(data_file.columns.values).intersection(set(meta_file['gid_wgs'].values))
     meta_file = meta_file[meta_file['gid_wgs'].isin(w_ids)]
-    time_points, meta_file, data_file = time_points_data(meta_file, data_file)
+    data_file = data_file.loc[:, w_ids]
 
+    time_points, meta_file, data_file = time_points_data(meta_file, data_file)
     subjects = list(time_points.keys())
 
     _, counts = np.unique(meta_file['subjectID'], return_counts=True)
     maxLen = max(counts)
+    print(np.sum(counts))
 
     numFeatures = len(data_file.index)
+
+    print("samples FIN="+ str(len(meta_file[meta_file['country'] == 'FIN'])))
+    print("samples RUS=" + str(len(meta_file[meta_file['country'] == 'RUS'])))
+    print("samples EST=" + str(len(meta_file[meta_file['country'] == 'EST'])))
+
+    groups = meta_file.groupby('country')
+    for name, group in groups:
+        subjectIDs = set(group['subjectID'].values.tolist())
+        print("subjects " +name +"=" + str(len(subjectIDs)))
 
     return maxLen, numFeatures, subjects, meta_file, time_points, data_file
 
